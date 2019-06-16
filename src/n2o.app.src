@@ -1,9 +1,6 @@
-{application, n2o, [
-    {description,  "N2O WebSocket Application Server"},
-    {vsn,          "3.3"},
-    {applications, [kernel, stdlib, cowboy]},
-    {modules, []},
-    {registered,   []},
-    {mod, { n2o,   []}},
-    {env, []}
-]}.
+{application,n2o,
+             [{description,"N2O DAS MQTT TCP WebSocket"},
+              {vsn,"6.6.0"},
+              {applications,[kernel,stdlib]},
+              {mod,  {n2o, []}},
+              {env,[]}]}.

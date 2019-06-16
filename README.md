@@ -1,182 +1,126 @@
-N2O: Erlang Application Server
-==============================
+N2O: Distributed Application Server
+===================================
 
 [![Build Status](https://travis-ci.org/synrc/n2o.svg?branch=master)](https://travis-ci.org/synrc/n2o)
 
-Features
---------
+N2O is a embeddable message protocol loop library for
+WebSocket, HTTP, MQTT and TCP servers. It provides basic
+features, such as process management, virtual nodes ring for
+request processing, session, frame encoding, mq and caching services.
 
-* Formatters: **BERT**, JSON — changeable on the fly
-* Protocols: [N2O](http://5ht.co/n2o.htm), [NITRO](http://5ht.co/n2o.htm), [SPA](http://5ht.co/n2o.htm), [FTP](http://5ht.co/ftp.htm)
-* Endpoints: **WebSocket**, HTTP, [REST](http://synrc.github.io/rest)
-* High Performance Protocol Relay
-* Smallest possible codebase — **1K** **LOC**
-* BEAM/LING support on posix, arm, mips and xen platforms
-* Single-file atomic packaging with [MAD](http://synrc.github.io/mad)
-* Handlers
-  * PubSub: MQS, GPROC
-  * Templates: DTL, [NITRO](http://synrc.github.io/nitro)
-  * Sessions: server driven
-  * DOM Language: SHEN JavaScript Compiler
-  * Error Logging: IO, LOGGER
-  * Security: PLAIN, AES CBC 128
-* Speed: **30K** **conn/s** at notebook easily
-* Samples: Skyline (DSL), Games (SPA), Review (KVS), Sample (MAD)
-
-Optional Dependencies
----------------------
-
-N2O comes with BERT message formatter support out of the box, and you only need
-one N2O dependency in this case. Should you need DTL templates, JSON message formatter, 
-SHEN JavaScript Compiler or NITRO Nitrogen DSL you can plug all of them in separately:
-
-```erlang
-{n2o,    ".*",{git,"git://github.com/synrc/n2o",         {tag, "2.8"}}},
-{nitro,  ".*",{git,"git://github.com/synrc/nitro",       {tag, "2.8"}}},
-{shen,   ".*",{git,"git://github.com/synrc/shen",        {tag, "1.5"}}},
-{jsone,  ".*",{git,"git://github.com/sile/jsone.git",    {tag,"v0.3.3"}}},
-{erlydtl,".*",{git,"git://github.com/evanmiller/erlydtl",{tag,"0.8.0"}}},
-```
-
-Message Formatters
-------------------
-
-You can use any message formmatter at the bottom of N2O protocol.
-IO messages supported by the N2O protocol are as follows:
-
-```
-1. BERT : {io,"console.log('hello')",1}
-2. WAMP : [io,"console.log('hello')",1]
-3. JSON : {name:io,eval:"console.log('hello')",data:1}
-4. TEXT : IO console.log('hello') 1\n
-5. XML  : <io><eval>console.log('hello')</eval><data>1</data></io>
-```
-
-Besides, you can even switch a channel termination formatter on the fly
-within one WebSocket session.
-
-All Features in One snippet
----------------------------
-
-```erlang
--module(index).
--compile(export_all).
--include_lib("nitro/include/nitro.hrl").
--include_lib("n2o/include/wf.hrl").
-
-peer()    -> io_lib:format("~p",[wf:peer(?REQ)]).
-message() -> wf:js_escape(wf:html_encode(wf:q(message))).
-main()    -> #dtl{file="index",app=n2o_sample,bindings=[{body,body()}]}.
-body() ->
-    {Pid,_} = wf:async(fun(X) -> chat_loop(X) end),
-    [ #panel{id=history}, #textbox{id=message},
-      #button{id=send,body="Chat",postback={chat,Pid},source=[message]} ].
-
-event(init) -> wf:reg(room);
-event({chat,Pid}) -> Pid ! {peer(), message()};
-event(Event) -> skip.
-
-chat_loop({Peer, Message} ) ->
-       wf:insert_bottom(history,#panel{body=[Peer,": ",Message,#br{}]}),
-       wf:flush(room) end.
-```
-
-Performance
------------
-
-ab, httperf, wrk and siege are all used for measuring performance. 
-The most valuable request hell is created by wrk and even though it 
-is not achievable in real apps, it can demonstrate internal throughput 
-of certain individual components. 
-
-The nearest to real life apps is siege which also performs a DNS lookup
-for each request. The data below shows internal data throughput by wrk:
-
-| Framework | Enabled Components | Speed | Timeouts |
-|-----------|--------------------|-------|----------|
-| PHP5 FCGI | Simple script with two <?php print "OK"; ?> | 5K | timeouts |
-| ChicagoBoss| No sessions, No DSL, Simple DTL | 500 | no |
-| Nitrogen  | No sessions, No DSL, Simple DTL | 1K | no |
-| N2O       | All enabled, sessions, Template, heavy DSL | 7K | no |
-| N2O       | Sessions enabled, template with two variables, no DSL | 10K | no |
-| N2O       | No sessions, No DSL, only template with two vars | 15K | no |
-
-Kickstart Bootstrap
--------------------
-
-To try N2O you  need to clone a N2O repo from Github and build it.
-We use a very small and powerful tool called mad designed specially for our Web Stack.
-
-    $ git clone git://github.com/synrc/n2o
-    $ cd n2o/samples
-    $ ./mad deps compile plan repl
-
-Now you can try it out: [http://localhost:8000](http://localhost:8000)
-
-LINUX NOTE: if you want to have online recompilation you should install `inotify-tools` first:
-
-    $ sudo apt-get install inotify-tools
-
-Tests
------
-
-    $ cd tests
-    $ npm install -g casperjs
-    $ casperjs test casper
-
-Erlang version
---------------
-
-We don't accept any reports of problems related to ESL or Ubuntu packaging.
-We only support Erlang built from sources, official Windows package,
-built with kerl or installed on Mac with homebrew. If you have any problems
-with your favourite Erlang package for your OS, please report issues
-to package maintainer.
-
-Posting Issues on Github
--------
-
-Thank you for using N2O (you've made a wise choice) and your contributions
-to help make it better. Before posting an issue on Github, please contact
-us via the options listed below in the support section. Doing so will
-help us determine whether your issue is a suggested feature, refactor
-of existing code, bug, etc, that needs to be posted to GitHub for the
-contributing development community of N2O to incorporate. DO NOT post
-issues to GitHub related to misuses of N2O, all such issues will be closed.
-
-Support
--------
-* [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/synrc/n2o?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-* IRC Channel #n2o on FreeNode 24/7
-
-Documentation
--------
-
-If you are new or you need to decide whether the N2O architecture
-and philosophy is a fit for your project
-
-* Official N2O Book [PDF](http://synrc.com/apps/n2o/doc/book.pdf)
-
-Windows Users
+Core Features
 -------------
 
-For windows you should install http://msys2.github.io and
-appropriative packages to use Synrc Stack:
+* Purpose: High performance protocol relay
+* Endpoints: WebSockets, MQTT, TCP
+* Codebase: 1K LOC (Erlang), 500 LOC (JavaScript)
+* Dialyzer: REBAR, REBAR3, MAD, MIX
+* Hosts: COWBOY, EMQ, MOCHIWEB, RING, TCP, UDP
 
-* pacman -S git
+Protocol Extensions
+-------------------
 
-Credits
+* Templates: DTL, <a href="https://nitro.n2o.space">NITRO</a>
+* Databases [KVS, <a href="https://kvx.n2o.space">KVX</a>]: FS, MNESIA, ROCKSDB, RIAK, REDIS
+* Business Processes: <a href="https://bpe.n2o.space">BPE</a> (BPMN 2.0), SCM, ERP, CRM
+* Instant Messaging: <a href="https://chat.n2o.space">CHAT</a>
+* HTTP API: <a href="https://rest.n2o.space">REST</a> (proplist/JSON)
+* <a href="https://active.n2o.space">ACTIVE</a> Reloading: Linux, Windows, Mac
+
+Samples
 -------
+* MQTT Chat: <a href="https://review.n2o.space">REVIEW TT</a> (8000)
+* WebSocket Chat: <a href="https://sample.n2o.space">SAMPLE WS</a> (8001)
+* Business Forms: <a href="http://forms.n2o.space">FORMS</a> (8002, HTTP)
+* Online Client Bank: <a href="https://bank.n2o.space">BANK</a> (8003)
+* Instant Messaging: <a href="https://chat.n2o.space">CHAT</a> (8042)
 
-* Maxim Sokhatsky — core, shen, windows
-* Dmitry Bushmelev — endpoints, yaws, cowboy
-* Andrii Zadorozhnii — elements, actions, handlers
-* Vladimir Kirillov — mac, bsd, xen, linux support
-* Andrey Martemyanov — binary protocols
-* Oleksandr Nikitin — security
-* Anton Logvinenko — doc
-* Roman Shestakov — advanced elements, ct
-* Jesse Gumm — nitrogen, help
-* Rusty Klophaus — original author
+Motivation
+----------
 
-OM A HUM
+N2O was created to bring clarity and sanity to software development.
+The distribution model is per file basis with ISC license.
+
+Kernel
+------
+
+The core modules provide OTP start and N2O entry point.
+
+* [n2o](https://ws.n2o.space/man/n2o.htm) — N2O OTP Supervisor and Application
+* [n2o_pi](https://ws.n2o.space/man/n2o_pi.htm) — N2O Processes
+* [n2o_proto](https://ws.n2o.space/man/n2o_proto.htm) — N2O Loop
+* [n2o_ring](https://ws.n2o.space/man/n2o_ring.htm) — N2O Ring
+
+MQTT
+----
+
+MQTT version is implemented as RPC over MQ pattern.
+N2O service worker started as ring of virtual nodes each runs N2O loop.
+
+* [n2o_mqtt](https://ws.n2o.space/man/n2o_vnode.htm) — N2O MQTT Virtual Node
+* [n2o_auth](https://ws.n2o.space/man/n2o_auth.htm) — N2O Auth
+
+```
+$ mad app mqtt review
+$ cd review
+$ mad dep com pla rep
+$ open http://127.0.0.1:8000
+```
+
+WebSocket
+---------
+
+N2O Loop is directly connected and runned inside context of WebSocket handler.
+Usually in Erlang we use `syn` or `gproc` OTP message buses.
+As such buses are optional in MQTT setup we include bus drivers in WebSocket package.
+
+* [n2o_stream](https://ws.n2o.space/man/n2o_stream.htm) — COWBOY and XHR bridge
+* [n2o_ws](https://ws.n2o.space/man/n2o_wsnode.htm) — N2O WebSocket Virtual Node
+* [n2o_heart](https://ws.n2o.space/man/n2o_heart.htm) — PING protocol
+* [n2o_cowboy](https://ws.n2o.space/man/n2o_cowboy.htm) — COWBOY API
+* [n2o_gproc](https://ws.n2o.space/man/n2o_gproc.htm) — GPROC bus backend
+* [n2o_syn](https://ws.n2o.space/man/n2o_syn.htm) — SYN bus backend
+
+```
+$ mad app web sample
+$ cd sample
+$ mad dep com pla rep
+$ open http://127.0.0.1:8001/app/index.htm
+```
+
+Protocols
+---------
+
+N2O ships with 3 optional protocols.
+
+* [n2o_nitro](https://ws.n2o.space/man/n2o_nitro.htm) — N2O Nitrogen web framework protocol
+* [n2o_ftp](https://ws.n2o.space/man/n2o_ftp.htm) — N2O File protocol
+* [n2o_heart](https://ws.n2o.space/man/n2o_heart.htm) — N2O Heart protocol
+
+Services
+--------
+
+Formatters, Sessions, etc. Optional.
+
+* [n2o_bert](https://ws.n2o.space/man/n2o_bert.htm) — BERT encoder/decoder
+* [n2o_json](https://ws.n2o.space/man/n2o_json.htm) — JSON encoder/decoder
+* [n2o_secret](https://ws.n2o.space/man/n2o_secret.htm)  — AES/CBC-128 encoder/decoder
+* [n2o_session](https://ws.n2o.space/man/n2o_session.htm) — ETS session storage
+
+JavaScript
+----------
+
+* [bert.js](https://ws.n2o.space/man/bert.js.htm) — BERT encoder/decoder
+* [utf8.js](https://ws.n2o.space/man/utf8.js.htm) — UTF8 encoder/decoder
+* [ieee754.js](https://ws.n2o.space/man/ieee754.js.htm) — IEEE754 encoder/decoder
+* [heart.js](https://ws.n2o.space/man/heart.js.htm) — HEART protocol
+* [nitro.js](https://ws.n2o.space/man/nitro.js.htm) — NITRO protocol
+* [ftp.js](https://ws.n2o.space/man/ftp.js.htm)  — FTP protocol
+* [n2o.js](https://ws.n2o.space/man/n2o.js.htm) — N2O protocol loop
+* [mq.js](https://ws.n2o.space/man/mq.js.htm) — MQTT client
+
+Literature
+----------
+
+* N2O Book [PDF](http://synrc.com/apps/n2o/doc/book.pdf)
+
